@@ -29,7 +29,7 @@ glm::mat4 ProjectionMatrix;
 
 GLuint image;
 
-static const GLfloat g_vertex_buffer_data[] = {
+static const std::vector<GLfloat> g_vertex_buffer_data = {
     -1.0f, -1.0f, -1.0f, //0 -- left right
     -1.0f, -1.0f, 1.0f,  //1
     -1.0f, 1.0f, 1.0f,   //2
@@ -79,7 +79,7 @@ static const GLfloat g_vertex_buffer_data[] = {
     1.0f, -1.0f, 1.0f  //35
 };
 
-static const GLfloat g_uv_buffer_data[] = {
+static const std::vector<GLfloat> g_uv_buffer_data = {
     0.0f, 0.0f,         //0 -- left right
     1.0f / 3, 0.0f,     //1
     1.0f / 3, 1.0f / 2, //2
@@ -180,25 +180,26 @@ int main()
    // Accept fragment if it closer to the camera than the former one
    glDepthFunc(GL_LESS);
 
+   Shader ourShader("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
+
+   Model ourModel("low-poly-fox-by-pixelmannen.obj");
+
    GLuint VertexArrayID;
    glGenVertexArrays(1, &VertexArrayID);
    glBindVertexArray(VertexArrayID);
-
-   Shader ourShader("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
 
    GLuint Texture = TextureFromFile("dice.bmp");
 
    GLuint vertexbuffer;
    glGenBuffers(1, &vertexbuffer);
    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, g_vertex_buffer_data.size() * sizeof(GLfloat), g_vertex_buffer_data.data(), GL_STATIC_DRAW);
 
    GLuint uvbuffer;
    glGenBuffers(1, &uvbuffer);
    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, g_uv_buffer_data.size() * sizeof(GLfloat), g_uv_buffer_data.data(), GL_STATIC_DRAW);
 
-   //Model ourModel("low-poly-fox-by-pixelmannen.obj");
    do
    {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
