@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "controls.hpp"
-#include "shaders.hpp"
 #include "Model.hpp"
 #include "window.hpp"
 
@@ -185,14 +184,9 @@ int main()
    glGenVertexArrays(1, &VertexArrayID);
    glBindVertexArray(VertexArrayID);
 
-   const GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
    Shader ourShader("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
-   const GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
    GLuint Texture = TextureFromFile("dice.bmp");
-
-   // Get a handle for our "myTextureSampler" uniform
-   GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
 
    GLuint vertexbuffer;
    glGenBuffers(1, &vertexbuffer);
@@ -209,22 +203,19 @@ int main()
    {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      // Use our shader
-      glUseProgram(programID);
+      ourShader.use();
 
       updateMatricesFromInputs();
       const glm::mat4 ModelMatrix = glm::mat4(1.0f);
       const glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-      // Send our transformation to the currently bound shader,
-      // in the "MVP" uniform
-      glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+      ourShader.setMat4("MVP", MVP);
 
       // Bind our texture in Texture Unit 0
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, Texture);
-      // Set our "myTextureSampler" sampler to use Texture Unit 0
-      glUniform1i(TextureID, 0);
+
+      ourShader.setInt("myTextureSampler", 0);
 
       // 1rst attribute buffer : vertices
       glEnableVertexAttribArray(0);
@@ -269,7 +260,6 @@ int main()
    // Cleanup VBO and shader
    glDeleteBuffers(1, &vertexbuffer);
    glDeleteBuffers(1, &uvbuffer);
-   glDeleteProgram(programID);
    glDeleteTextures(1, &Texture);
    glDeleteVertexArrays(1, &VertexArrayID);
 
