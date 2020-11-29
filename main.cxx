@@ -18,6 +18,8 @@ using namespace glm;
 #include <GL/glut.h>
 
 constexpr char title[] = "Computer Graphics. Lab 2";
+constexpr long screenW = 512,
+               screenH = 512;
 
 GLuint image;
 
@@ -214,6 +216,88 @@ GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path)
    return ProgramID;
 }
 
+glm::mat4 ViewMatrix;
+glm::mat4 ProjectionMatrix;
+
+// Initial position : on +Z
+glm::vec3 position = glm::vec3(5, 0, 10);
+// Initial horizontal angle : toward -Z
+float horizontalAngle = 3.14f;
+// Initial vertical angle : none
+float verticalAngle = 0.0f;
+// Initial Field of View
+constexpr float FoV = 45.0f;
+
+float speed = 3.0f; // 3 units / second
+float mouseSpeed = 0.005f;
+
+void computeMatricesFromInputs()
+{
+   // glfwGetTime is called only once, the first time this function is called
+   static double lastTime = glfwGetTime();
+
+   const double currentTime = glfwGetTime();
+   const float deltaTime = float(currentTime - lastTime);
+
+   double xpos, ypos;
+   glfwGetCursorPos(window, &xpos, &ypos);
+
+   // Reset mouse position for next frame
+   glfwSetCursorPos(window, screenW / 2, screenH / 2);
+
+   // Compute new orientation
+   horizontalAngle += mouseSpeed * float(screenW / 2 - xpos);
+   verticalAngle += mouseSpeed * float(screenH / 2 - ypos);
+
+   // Direction : Spherical coordinates to Cartesian coordinates conversion
+   glm::vec3 direction(
+       cos(verticalAngle) * sin(horizontalAngle),
+       sin(verticalAngle),
+       cos(verticalAngle) * cos(horizontalAngle));
+
+   // Right vector
+   glm::vec3 right = glm::vec3(
+       sin(horizontalAngle - 3.14f / 2.0f),
+       0,
+       cos(horizontalAngle - 3.14f / 2.0f));
+
+   // Up vector
+   glm::vec3 up = glm::cross(right, direction);
+
+   // Move forward
+   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+   {
+      position += direction * deltaTime * speed;
+   }
+   // Move backward
+   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+   {
+      position -= direction * deltaTime * speed;
+   }
+   // Strafe right
+   if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+   {
+      position += right * deltaTime * speed;
+   }
+   // Strafe left
+   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+   {
+      position -= right * deltaTime * speed;
+   }
+
+   // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+   ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+   // Camera matrix
+   ViewMatrix = glm::lookAt(
+       position,             // Camera is here
+       position + direction, // and looks here : at the same position, plus "direction"
+       up                    // Head is up (set to 0,-1,0 to look upside-down)
+   );
+
+   // For the next frame, the "last time" will be "now"
+   lastTime = currentTime;
+}
+
 static const GLfloat g_vertex_buffer_data[] = {
     -1.0f, -1.0f, -1.0f, //0 -- left right
     -1.0f, -1.0f, 1.0f,  //1
@@ -330,10 +414,10 @@ int main()
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
    // Open a window and create its OpenGL context
-   window = glfwCreateWindow(1024, 768, "Tutorial 05 - Textured Cube", NULL, NULL);
-   if (window == NULL)
+   window = glfwCreateWindow(screenW, screenH, "Tutorial 05 - Textured Cube", nullptr, nullptr);
+   if (!window)
    {
-      fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+      fprintf(stderr, "Failed to open GLFW window.\n");
       glfwTerminate();
       return -1;
    }
@@ -349,6 +433,11 @@ int main()
 
    // Ensure we can capture the escape key being pressed below
    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+   // Hide the mouse and enable unlimited mouvement
+   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+   glfwPollEvents();
+   glfwSetCursorPos(window, screenW / 2, screenH / 2);
 
    // Dark blue background
    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -362,24 +451,9 @@ int main()
    glGenVertexArrays(1, &VertexArrayID);
    glBindVertexArray(VertexArrayID);
 
-   // Create and compile our GLSL program from the shaders
-   GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
+   const GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
 
-   // Get a handle for our "MVP" uniform
-   GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-   // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-   glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-   // Camera matrix
-   glm::mat4 View = glm::lookAt(
-       glm::vec3(-4, -3, -3), // Camera is at (4,3,3), in World Space
-       glm::vec3(0, 0, 0),    // and looks at the origin
-       glm::vec3(0, 1, 0)     // Head is up (set to 0,-1,0 to look upside-down)
-   );
-   // Model matrix : an identity matrix (model will be at the origin)
-   glm::mat4 Model = glm::mat4(1.0f);
-   // Our ModelViewProjection : multiplication of our 3 matrices
-   glm::mat4 MVP = Projection * View * Model; // Remember, matrix multiplication is the other way around
+   const GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
    GLuint Texture = loadBMP_custom("dice.bmp");
 
@@ -402,6 +476,10 @@ int main()
 
       // Use our shader
       glUseProgram(programID);
+
+      computeMatricesFromInputs();
+      const glm::mat4 ModelMatrix = glm::mat4(1.0f);
+      const glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
       // Send our transformation to the currently bound shader,
       // in the "MVP" uniform
