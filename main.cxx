@@ -1,6 +1,8 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include "controls.hpp"
 #include "shaders.hpp"
-#include "textures.hpp"
+#include "Model.hpp"
 #include "window.hpp"
 
 #include <fstream>
@@ -164,7 +166,9 @@ int main()
    // Ensure we can capture the escape key being pressed below
    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
    // Hide the mouse and enable unlimited mouvement
-   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+   //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+   stbi_set_flip_vertically_on_load(true);
 
    glfwPollEvents();
    glfwSetCursorPos(window, screenW / 2, screenH / 2);
@@ -182,10 +186,10 @@ int main()
    glBindVertexArray(VertexArrayID);
 
    const GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
-
+   Shader ourShader("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
    const GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-   GLuint Texture = loadBMP_custom("dice.bmp");
+   GLuint Texture = TextureFromFile("dice.bmp");
 
    // Get a handle for our "myTextureSampler" uniform
    GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
@@ -200,6 +204,7 @@ int main()
    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
+   //Model ourModel("low-poly-fox-by-pixelmannen.obj");
    do
    {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -250,6 +255,8 @@ int main()
 
       glDisableVertexAttribArray(0);
       glDisableVertexAttribArray(1);
+
+      //ourModel.Draw(ourShader);
 
       // Swap buffers
       glfwSwapBuffers(window);
