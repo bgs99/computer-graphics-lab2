@@ -72,29 +72,12 @@ Texture TextureFromFile(const char *path, bool gamma = false)
 class Mesh
 {
 public:
-    // mesh Data
-    vector<Vertex> m_vertices;
-    vector<unsigned int> m_indices;
-    vector<Texture> m_textures;
-    unsigned int m_VAO;
-
     // constructor
     explicit Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
         : m_vertices{std::move(vertices)}
         , m_indices{std::move(indices)}
         , m_textures{std::move(textures)}
     {
-        // now that we have all the required data, set the vertex buffers and its attribute pointers.
-        setupMesh();
-    }
-
-    explicit Mesh(std::vector<Vertex> vertices, Texture texture)
-        : m_vertices{std::move(vertices)}
-        , m_textures{{std::move(texture)}}
-    {
-        for (int i = 0; i < m_vertices.size(); ++i) {
-            m_indices.push_back(i);
-        }
         setupMesh();
     }
 
@@ -137,12 +120,16 @@ public:
     }
 
 private:
-    // render data
-    unsigned int m_VBO, m_EBO;
+    // mesh Data
+    std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
+    std::vector<Texture> m_textures;
+    unsigned int m_VAO;
 
     // initializes all the buffer objects/arrays
     void setupMesh()
     {
+        unsigned int m_VBO, m_EBO;
         // create buffers/arrays
         glGenVertexArrays(1, &m_VAO);
         glGenBuffers(1, &m_VBO);
