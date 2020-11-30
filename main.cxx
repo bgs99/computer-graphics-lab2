@@ -5,6 +5,7 @@
 #include "window.hpp"
 
 #include "Cube.hpp"
+#include "Sphere.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -85,10 +86,16 @@ int main(int argc, char **argv)
    ourShader.setFloat("ambientStrength", 0.000001f);
    ourShader.setVec3("lightPos", lightPos);
    ourShader.setVec3("lightColor", lightCol);
+   ourShader.setVec3("spotDir", {-1.0f, 0.0f, 0.0f});
+   ourShader.setFloat("cutOff", glm::cos(glm::radians(12.5f)));
+   ourShader.setFloat("outerCutOff", glm::cos(glm::radians(17.5f)));
 
    Model ourModel("low-poly-fox-by-pixelmannen.obj");
 
    Cube cube;
+   Mesh sphere = makeSphere(2.0f, 10, 10);
+
+   double lastTime = glfwGetTime();
 
    do
    {
@@ -101,8 +108,17 @@ int main(int argc, char **argv)
       ourShader.setMat4("model", ModelMatrix);
       ourShader.setMat4("viewPos", ViewMatrix);
 
-      cube.Draw(ourShader);
+      sphere.Draw(ourShader);      
       ourModel.Draw(ourShader);
+
+      const double currentTime = glfwGetTime();
+      const float deltaTime = float(currentTime - lastTime);
+
+      const glm::mat4 BoxModelMatrix =
+          glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, glm::cos(deltaTime) * 5.0f, glm::sin(deltaTime) * 5.0f));
+      ourShader.setMat4("model", BoxModelMatrix);
+
+      cube.Draw(ourShader);
 
       const glm::mat4 LightModelMatrix =
           glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2f));
