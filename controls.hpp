@@ -3,6 +3,6 @@
 #include <glm/glm.hpp>
 
 extern glm::mat4 ViewMatrix,
-                 ProjectionMatrix;
-
+    ProjectionMatrix;
+extern glm::vec3 position;
 void updateMatricesFromInputs();

@@ -8,8 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
-// Initial position : on +Z
-glm::vec3 position = glm::vec3(5, 0, 10);
 // Initial horizontal angle : toward -Z
 float horizontalAngle = 3.14f;
 // Initial vertical angle : none

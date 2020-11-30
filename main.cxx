@@ -28,8 +28,11 @@ constexpr char title[] = "Computer Graphics. Lab 2";
 
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
+glm::vec3 position{3.0f, 0.0f, 5.0f};
+const glm::vec3 lightPos{3.0f, 3.0f, 3.0f};
+const glm::vec3 lightCol{1.0f, 1.0f, 1.0f};
 
-int main()
+int main(int argc, char **argv)
 {
    // Initialise GLFW
    if (!glfwInit())
@@ -44,7 +47,6 @@ int main()
    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-   // Open a window and create its OpenGL context
    window = glfwCreateWindow(screenW, screenH, "Tutorial 05 - Textured Cube", nullptr, nullptr);
    if (!window)
    {
@@ -62,25 +64,27 @@ int main()
       return -1;
    }
 
-   // Ensure we can capture the escape key being pressed below
    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-   // Hide the mouse and enable unlimited mouvement
-   //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
    stbi_set_flip_vertically_on_load(true);
 
    glfwPollEvents();
    glfwSetCursorPos(window, screenW / 2, screenH / 2);
 
-   // Dark blue background
-   glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+   glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
 
-   // Enable depth test
    glEnable(GL_DEPTH_TEST);
+   glEnable(GL_CULL_FACE);
    // Accept fragment if it closer to the camera than the former one
    glDepthFunc(GL_LESS);
 
-   Shader ourShader("shader.vs", "shader.fs");
+   Shader ourShader("light");
+   ourShader.use();
+
+   ourShader.setFloat("ambientStrength", 0.000001f);
+   ourShader.setVec3("lightPos", lightPos);
+   ourShader.setVec3("lightColor", lightCol);
 
    Model ourModel("low-poly-fox-by-pixelmannen.obj");
 
@@ -90,16 +94,21 @@ int main()
    {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      ourShader.use();
-
       updateMatricesFromInputs();
       constexpr glm::mat4 ModelMatrix = glm::mat4(1.0f);
       ourShader.setMat4("projection", ProjectionMatrix);
       ourShader.setMat4("view", ViewMatrix);
       ourShader.setMat4("model", ModelMatrix);
+      ourShader.setMat4("viewPos", ViewMatrix);
 
       cube.Draw(ourShader);
       ourModel.Draw(ourShader);
+
+      const glm::mat4 LightModelMatrix =
+          glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2f));
+      ourShader.setMat4("model", LightModelMatrix);
+
+      cube.Draw(ourShader);
 
       // Swap buffers
       glfwSwapBuffers(window);
