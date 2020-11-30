@@ -4,6 +4,8 @@
 #include "Model.hpp"
 #include "window.hpp"
 
+#include "Cube.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -26,106 +28,6 @@ constexpr char title[] = "Computer Graphics. Lab 2";
 
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
-
-static const std::vector<GLfloat> g_vertex_buffer_data = {
-    -1.0f, -1.0f, -1.0f, //0 -- left right
-    -1.0f, -1.0f, 1.0f,  //1
-    -1.0f, 1.0f, 1.0f,   //2
-
-    1.0f, 1.0f, -1.0f,   //3 -- back right
-    -1.0f, -1.0f, -1.0f, //4
-    -1.0f, 1.0f, -1.0f,  //5
-
-    1.0f, -1.0f, 1.0f,   //6 -- bottom left
-    -1.0f, -1.0f, -1.0f, //7
-    1.0f, -1.0f, -1.0f,  //8
-
-    1.0f, 1.0f, -1.0f,   //9 -- back left
-    1.0f, -1.0f, -1.0f,  //10
-    -1.0f, -1.0f, -1.0f, //11
-
-    -1.0f, -1.0f, -1.0f, //12 -- left left
-    -1.0f, 1.0f, 1.0f,   //13
-    -1.0f, 1.0f, -1.0f,  //14
-
-    1.0f, -1.0f, 1.0f,   //15 -- bottom right
-    -1.0f, -1.0f, 1.0f,  //16
-    -1.0f, -1.0f, -1.0f, //17
-
-    -1.0f, 1.0f, 1.0f,  //18 -- front left
-    -1.0f, -1.0f, 1.0f, //19
-    1.0f, -1.0f, 1.0f,  //20
-
-    1.0f, 1.0f, 1.0f,   //21 -- right right
-    1.0f, -1.0f, -1.0f, //22
-    1.0f, 1.0f, -1.0f,  //23
-
-    1.0f, -1.0f, -1.0f, //24 -- right left
-    1.0f, 1.0f, 1.0f,   //25
-    1.0f, -1.0f, 1.0f,  //26
-
-    1.0f, 1.0f, 1.0f,   //27 -- top right
-    1.0f, 1.0f, -1.0f,  //28
-    -1.0f, 1.0f, -1.0f, //29
-
-    1.0f, 1.0f, 1.0f,   //30 -- top left
-    -1.0f, 1.0f, -1.0f, //31
-    -1.0f, 1.0f, 1.0f,  //32
-
-    1.0f, 1.0f, 1.0f,  //33 -- front right
-    -1.0f, 1.0f, 1.0f, //34
-    1.0f, -1.0f, 1.0f  //35
-};
-
-static const std::vector<GLfloat> g_uv_buffer_data = {
-    0.0f, 0.0f,         //0 -- left right
-    1.0f / 3, 0.0f,     //1
-    1.0f / 3, 1.0f / 2, //2
-
-    2.0f / 3, 1.0f / 2, //3 -- back right
-    1.0f, 0.0f,         //4
-    1.0f, 1.0f / 2,     //5
-
-    1.0f / 3, 0.0f,     //6 -- bottom left
-    2.0f / 3, 1.0f / 2, //7
-    1.0f / 3, 1.0f / 2, //8
-
-    2.0f / 3, 1.0f / 2, //9 -- back left
-    2.0f / 3, 0.0f,     //10
-    1.0f, 0.0f,         //11
-
-    0.0f, 0.0f,         //12 -- left left
-    1.0f / 3, 1.0f / 2, //13
-    0.0f, 1.0f / 2,     //14
-
-    1.0f / 3, 0.0f,     //15 -- bottom right
-    2.0f / 3, 0.0f,     //16
-    2.0f / 3, 1.0f / 2, //17
-
-    0.0f, 1.0f,         //18 -- front left
-    0.0f, 1.0f / 2,     //19
-    1.0f / 3, 1.0f / 2, //20
-
-    2.0f / 3, 1.0f, //21 -- right right
-    1.0f, 1.0f / 2, //22
-    1.0f, 1.0f,     //23
-
-    1.0f, 1.0f / 2,     //24 -- right left
-    2.0f / 3, 1.0f,     //25
-    2.0f / 3, 1.0f / 2, //26
-
-    2.0f / 3, 1.0f / 2, //27 -- top right
-    2.0f / 3, 1.0f,     //28
-    1.0f / 3, 1.0f,     //29
-
-    2.0f / 3, 1.0f / 2, //30 ---top left
-    1.0f / 3, 1.0f,     //31
-    1.0f / 3, 1.0f / 2, //32
-
-    1.0f / 3, 1.0f,     //33 -- front right
-    0.0f, 1.0f,         //34
-    1.0f / 3, 1.0f / 2, //35
-};
 
 int main()
 {
@@ -182,7 +84,7 @@ int main()
 
    Model ourModel("low-poly-fox-by-pixelmannen.obj");
 
-   Mesh cube = Mesh::fromSimpleVertices(g_vertex_buffer_data, g_uv_buffer_data, TextureFromFile("dice.bmp"));
+   Cube cube;
 
    do
    {
@@ -197,7 +99,7 @@ int main()
       ourShader.setMat4("model", ModelMatrix);
 
       cube.Draw(ourShader);
-      //ourModel.Draw(ourShader);
+      ourModel.Draw(ourShader);
 
       // Swap buffers
       glfwSwapBuffers(window);
