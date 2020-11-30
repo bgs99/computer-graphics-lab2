@@ -28,11 +28,11 @@ struct Vertex
 struct Texture
 {
     unsigned int id;
-    string type;
+    string type = "texture_diffuse";
     string path;
 };
 
-unsigned int TextureFromFile(const char *path, bool gamma = false)
+Texture TextureFromFile(const char *path, bool gamma = false)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -66,7 +66,7 @@ unsigned int TextureFromFile(const char *path, bool gamma = false)
         stbi_image_free(data);
     }
 
-    return textureID;
+    return Texture{textureID};
 }
 
 class Mesh

@@ -27,8 +27,6 @@ constexpr char title[] = "Computer Graphics. Lab 2";
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 
-GLuint image;
-
 static const std::vector<GLfloat> g_vertex_buffer_data = {
     -1.0f, -1.0f, -1.0f, //0 -- left right
     -1.0f, -1.0f, 1.0f,  //1
@@ -180,25 +178,11 @@ int main()
    // Accept fragment if it closer to the camera than the former one
    glDepthFunc(GL_LESS);
 
-   Shader ourShader("TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader");
+   Shader ourShader("shader.vs", "shader.fs");
 
    Model ourModel("low-poly-fox-by-pixelmannen.obj");
 
-   GLuint VertexArrayID;
-   glGenVertexArrays(1, &VertexArrayID);
-   glBindVertexArray(VertexArrayID);
-
-   GLuint Texture = TextureFromFile("dice.bmp");
-
-   GLuint vertexbuffer;
-   glGenBuffers(1, &vertexbuffer);
-   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-   glBufferData(GL_ARRAY_BUFFER, g_vertex_buffer_data.size() * sizeof(GLfloat), g_vertex_buffer_data.data(), GL_STATIC_DRAW);
-
-   GLuint uvbuffer;
-   glGenBuffers(1, &uvbuffer);
-   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-   glBufferData(GL_ARRAY_BUFFER, g_uv_buffer_data.size() * sizeof(GLfloat), g_uv_buffer_data.data(), GL_STATIC_DRAW);
+   Mesh cube = Mesh::fromSimpleVertices(g_vertex_buffer_data, g_uv_buffer_data, TextureFromFile("dice.bmp"));
 
    do
    {
@@ -207,47 +191,12 @@ int main()
       ourShader.use();
 
       updateMatricesFromInputs();
-      const glm::mat4 ModelMatrix = glm::mat4(1.0f);
-      const glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+      constexpr glm::mat4 ModelMatrix = glm::mat4(1.0f);
+      ourShader.setMat4("projection", ProjectionMatrix);
+      ourShader.setMat4("view", ViewMatrix);
+      ourShader.setMat4("model", ModelMatrix);
 
-      ourShader.setMat4("MVP", MVP);
-
-      // Bind our texture in Texture Unit 0
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, Texture);
-
-      ourShader.setInt("myTextureSampler", 0);
-
-      // 1rst attribute buffer : vertices
-      glEnableVertexAttribArray(0);
-      glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-      glVertexAttribPointer(
-          0,        // attribute. No particular reason for 0, but must match the layout in the shader.
-          3,        // size
-          GL_FLOAT, // type
-          GL_FALSE, // normalized?
-          0,        // stride
-          (void *)0 // array buffer offset
-      );
-
-      // 2nd attribute buffer : UVs
-      glEnableVertexAttribArray(1);
-      glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-      glVertexAttribPointer(
-          1,        // attribute. No particular reason for 1, but must match the layout in the shader.
-          2,        // size : U+V => 2
-          GL_FLOAT, // type
-          GL_FALSE, // normalized?
-          0,        // stride
-          (void *)0 // array buffer offset
-      );
-
-      // Draw the triangle !
-      glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 12*3 indices starting at 0 -> 12 triangles
-
-      glDisableVertexAttribArray(0);
-      glDisableVertexAttribArray(1);
-
+      cube.Draw(ourShader);
       //ourModel.Draw(ourShader);
 
       // Swap buffers
@@ -257,12 +206,6 @@ int main()
    } // Check if the ESC key was pressed or the window was closed
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
           glfwWindowShouldClose(window) == 0);
-
-   // Cleanup VBO and shader
-   glDeleteBuffers(1, &vertexbuffer);
-   glDeleteBuffers(1, &uvbuffer);
-   glDeleteTextures(1, &Texture);
-   glDeleteVertexArrays(1, &VertexArrayID);
 
    // Close OpenGL window and terminate GLFW
    glfwTerminate();

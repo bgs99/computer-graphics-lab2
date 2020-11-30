@@ -183,8 +183,7 @@ private:
             }
             if(!skip)
             {   // if texture hasn't been loaded already, load it
-                Texture texture;
-                texture.id = TextureFromFile(str.C_Str());
+                Texture texture = TextureFromFile(str.C_Str());
                 texture.type = typeName;
                 texture.path = str.C_Str();
                 textures.push_back(texture);
